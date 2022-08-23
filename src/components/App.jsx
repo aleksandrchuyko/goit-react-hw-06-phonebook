@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import {useEffect } from 'react';
 import shortid from 'shortid';
 
 import { Box } from './Box';
@@ -6,47 +6,55 @@ import { ContactForm } from './ContactForm/ContactForm';
 import { ContactList } from './ContactList/ContactList';
 import { Filter } from './Filter/Filter';
 
+import { useSelector, useDispatch } from 'react-redux';
+import { addContact, getContacts, getFilter, removeContact, setFilter } from 'redux/phonebookSlice';
+
 import { initialContacts } from 'constants';
 
 export const App = () => {
-  const [contacts, setContacts] = useState(() => {
-    const savedContacts = JSON.parse(localStorage.getItem('contacts'));
-    return savedContacts.length ? savedContacts : initialContacts;
-  });
-  const [filter, setFilter] = useState('');
-
+  
+  const dispatch = useDispatch();
+  const contacts = useSelector(getContacts);
+  const filter = useSelector(getFilter);
+  
+  //fill default contacts list if book is empty
   useEffect(() => {
-    localStorage.setItem('contacts', JSON.stringify(contacts));
-  }, [contacts]);
+    if (!contacts.length) {
+      initialContacts.map(contact => {
+        dispatch(addContact(contact));
+        return null;
+      });
+    }
+  }, [contacts, dispatch]);
 
+  //get contacts list by filter
   const getFilteredContacts = () => {
     return contacts.filter(contact => {
       return contact.name.toLowerCase().includes(filter.toLowerCase());
     });
   };
 
-  const addContact = ({ name, number }) => {
-    setContacts(state => {
-      return [
-        ...state,
-        {
-          id: shortid.generate(),
-          name,
-          number,
-        },
-      ];
-    });
+  //redux actions
+  const handleAddContact = ({ name, number }) => {
+    const contact = {
+      id: shortid.generate(),
+      name,
+      number,
+    };
+    dispatch(addContact(contact));
   };
 
-  const deleteContact = contactId => {
-    setContacts(contacts.filter(contact => contact.id !== contactId));
+  const handleDeleteContact = contactId => {
+    dispatch(removeContact(contactId));
   };
 
   const updateFilter = e => {
-    setFilter(e.target.value);
+    dispatch(setFilter(e.target.value));
   };
+  //------------------
 
   const filteredContacts = getFilteredContacts();
+  
   return (
     <Box
       style={{
@@ -60,12 +68,15 @@ export const App = () => {
       }}
     >
       <h1>Phonebook</h1>
-      <ContactForm contacts={contacts} onSubmit={addContact}></ContactForm>
+      <ContactForm
+        contacts={contacts}
+        onSubmit={handleAddContact}
+      ></ContactForm>
       <h2>Contacts</h2>
       <Filter name={filter} onChange={updateFilter}></Filter>
       <ContactList
         contacts={filteredContacts}
-        onDeleteContact={deleteContact}
+        onDeleteContact={handleDeleteContact}
       ></ContactList>
     </Box>
   );

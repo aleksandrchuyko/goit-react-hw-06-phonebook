@@ -1,5 +1,5 @@
 import { Box } from 'components/Box';
-import { Contact } from 'components/Contact/Contact';
+import { Contact } from 'components/ContactList/Contact/Contact';
 import PropTypes from 'prop-types';
 
 export const ContactList = ({ contacts, onDeleteContact }) => {
